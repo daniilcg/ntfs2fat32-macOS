@@ -1,6 +1,7 @@
 import os
 import tkinter as tk
 from tkinter import messagebox
+import psutil
 
 def ask_permission():
     response = messagebox.askyesno("Форматирование диска", "Хотите ли вы изменить файловую систему с NTFS на FAT32 без форматирования диска?")
@@ -11,15 +12,13 @@ def show_notification():
     root.withdraw()
     messagebox.showinfo("Перенос файлов", "Перенос файлов успешно завершен!")
 
-def detect_ntfs_disks():
-    ntfs_disks = []
-    output = os.popen('diskutil list').read()
-    lines = output.split('\n')
-    for line in lines:
-        if 'Microsoft Basic Data' in line:
-            parts = line.split()
-            ntfs_disks.append(parts[-1])
-    return ntfs_disks
+def detect_ntfs_flash_drive():
+    ntfs_flash_drive = None
+    for partition in psutil.disk_partitions():
+        if partition.fstype == 'ntfs' and 'removable' in partition.opts:
+            ntfs_flash_drive = partition.mountpoint
+            break
+    return ntfs_flash_drive
 
 def convert_filesystem(disk):
     try:
@@ -39,23 +38,22 @@ def transfer_files(disk):
         os.system(f"cp {file} {disk}")
 
 def main():
-    ntfs_disks = detect_ntfs_disks()
+    ntfs_flash_drive = detect_ntfs_flash_drive()
     
-    if not ntfs_disks:
-        print("Жесткие диски NTFS не найдены.")
+    if not ntfs_flash_drive:
+        print("NTFS флешка не найдена.")
         return
 
-    for disk in ntfs_disks:
-        print(f"Найден NTFS-диск: {disk}")
-        response = ask_permission()
+    print(f"Найдена NTFS флешка: {ntfs_flash_drive}")
+    response = ask_permission()
         
-        if response:
-            success = convert_filesystem(disk)
-            if success:
-                transfer_files(disk)
-                show_notification()
-        else:
-            print("Процесс изменения файловой системы отменен пользователем.")
+    if response:
+        success = convert_filesystem(ntfs_flash_drive)
+        if success:
+            transfer_files(ntfs_flash_drive)
+            show_notification()
+    else:
+        print("Процесс изменения файловой системы отменен пользователем.")
 
 if __name__ == '__main__':
     main()
