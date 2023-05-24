@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 def ask_permission():
-    response = messagebox.askyesno("Форматирование диска", "Хотите ли вы изменить файловую систему с NTFS на FAT32 без форматирования диска?")
+    response = messagebox.askyesno("Форматирование диска", "Хотите ли вы изменить файловую систему с NTFS на FAT32?")
     return response
 
 def show_notification():
